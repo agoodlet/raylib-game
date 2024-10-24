@@ -1,5 +1,4 @@
 #include "component.h"
-#include <stdio.h>
 
 int main() {
   Component *component = newComponent();
