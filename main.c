@@ -1,12 +1,11 @@
 #include "component.h"
-#include <raylib.h>
 
 int main() {
   Component *component = newComponent();
 
   registerPoint(component, (Vector2){30, 30}, 5, "input", START);
-  registerPoint(component, (Vector2){800 - 30, 450 - 30}, 5, "input", START);
-  registerPoint(component, (Vector2){800 - 30, 30}, 5, "input", START);
+  registerPoint(component, (Vector2){800 - 30, 450 - 30}, 6, "input1", START);
+  registerPoint(component, (Vector2){800 - 30, 30}, 7, "input2", START);
 
   int screenWidth = 800;
   int screenHeight = 450;
@@ -21,7 +20,7 @@ int main() {
 
     EndDrawing();
   }
-  yeet(component);
+  /* yeet(component); */
   CloseWindow();
 
   return 0;

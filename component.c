@@ -1,5 +1,6 @@
 #include "component.h"
-/* #include "raylib.h" */
+#include "list.h"
+/* #include <raylib.h> */
 #include <raylib.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,21 +37,31 @@ const int numPoints = 3;
 // projectiles and then I can derive the label from that
 void registerPoint(Component *component, Vector2 pos, int labelSize,
                    char *label, PointType type) {
+  Point *point;
+  point = malloc(sizeof(Point));
+
+  point->pos = pos;
+  // do some computing to make sure label is = labelSize
+  point->label = malloc(labelSize * sizeof(char));
+  point->label = label;
+  point->isConnected = false;
+  point->isConnecting = false;
+  point->selected = false;
+  point->connectedPoint = malloc(sizeof(Point));
+  point->type = type;
+  if (component->points == NULL) {
+    // this should now be the head node for the points linked list
+    component->points = newList(point);
+  } else {
+    pushBack(component->points, point);
+  }
+
   // make a linked list so I can add to the end of the list every time without
   // array fuckery
-  component->points[0].pos = pos;
-  // do some computing to make sure label is = labelSize
-  component->points[0].label = malloc(labelSize * sizeof(char));
-  component->points[0].label = label;
-  component->points[0].isConnected = false;
-  component->points[0].isConnecting = false;
-  component->points[0].selected = false;
-  component->points[0].connectedPoint = malloc(sizeof(Point));
-  component->points[0].type = type;
 }
 
 Component *newComponent() {
-  Point *Points = malloc(numPoints * sizeof(Point));
+  /* Point *Points = malloc(numPoints * sizeof(Point)); */
 
   Component *newComponent;
   newComponent = (Component *)malloc(sizeof(Component));
@@ -59,7 +70,7 @@ Component *newComponent() {
 
   newComponent->points = malloc(newComponent->numPoints * sizeof(Point));
 
-  newComponent->points = Points;
+  newComponent->points = NULL;
 
   return newComponent;
 }
@@ -68,24 +79,24 @@ void yeet(Component *component) {
   for (int a = 0; a < component->numPoints; a++) {
     // idk why but this breaks so we don't need it for now
     /* free(component->points[a].label); */
-    free(component->points[a].connectedPoint);
+    /* free(component->points[a].connectedPoint); */
   }
-  free(component->points);
-  free(component);
+  /* free(component->points); */
+  /* free(component); */
 }
 
 int render2(Component *component) {
 
-  DrawText("Something", 10, 10, 20, BLACK);
+  for (int a = 0; a < component->numPoints; a++) {
+    Point point = *getByIndex(component->points, a)->val;
+    DrawText(point.label, 50, 50 * a, 20, BLACK);
+  }
 
   return 0;
 }
 
 // render should take in a pointer to a component and render that component
 int render(Component *component) {
-
-  Point Points[numPoints];
-
   Point *start = NULL;
   Point *end = NULL;
 
@@ -94,51 +105,48 @@ int render(Component *component) {
   for (int a = 0; a < component->numPoints; a++) {
     // draw any connections we might have
 
-    if (component->points[a].isConnected) {
-      DrawLineBezier(component->points[a].pos,
-                     component->points[a].connectedPoint->pos, 4.0f, GREEN);
+    Point point = *getByIndex(component->points, a)->val;
+
+    if (point.isConnected) {
+      DrawLineBezier(point.pos, point.connectedPoint->pos, 4.0f, GREEN);
     }
 
-    if (component->points[a].type == START) {
-      if (CheckCollisionPointCircle(mouse, component->points[a].pos, 10.0f) &&
+    if (point.type == START) {
+      if (CheckCollisionPointCircle(mouse, point.pos, 10.0f) &&
           IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        start = &component->points[a];
+        start = &point;
         start->label = "onput";
-        printf("%s", component->points[a].label);
+        printf("%s", point.label);
       }
     }
 
-    if (component->points[a].type == END) {
+    if (point.type == END) {
       // set the end point if we mouse over a point while holding the
       // mouse
       // down
-      if (CheckCollisionPointCircle(mouse, component->points[a].pos, 10.0f) &&
+      if (CheckCollisionPointCircle(mouse, point.pos, 10.0f) &&
           IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-        end = &component->points[a];
+        end = &point;
       }
     }
 
     // make a renderHelper.h so I can add my draw text bounds detection to
     // that I guess
     Vector2 labelDimensions;
-    labelDimensions =
-        MeasureTextEx(GetFontDefault(), component->points[a].label, 20, 1);
+    labelDimensions = MeasureTextEx(GetFontDefault(), point.label, 20, 1);
 
-    if (component->points[a].pos.y > screenHeight / 2.0f) {
+    if (point.pos.y > screenHeight / 2.0f) {
       // I don't fucking understand why this is -2 instead of -1
       labelDimensions.y *= -2;
     }
 
-    DrawText(component->points[a].label,
-             component->points[a].pos.x - labelDimensions.x,
-             component->points[a].pos.y + labelDimensions.y, 20, BLACK);
+    DrawText(point.label, point.pos.x - labelDimensions.x,
+             point.pos.y + labelDimensions.y, 20, BLACK);
 
-    DrawCircleV(
-        component->points[a].pos,
-        CheckCollisionPointCircle(mouse, component->points[a].pos, 10.0f)
-            ? 14.0f
-            : 8.0f,
-        component->points[a].isConnecting ? RED : BLUE);
+    DrawCircleV(point.pos,
+                CheckCollisionPointCircle(mouse, point.pos, 10.0f) ? 14.0f
+                                                                   : 8.0f,
+                point.isConnecting ? RED : BLUE);
   }
 
   // if we release the mouse button and we have an end point, we want to

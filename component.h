@@ -3,6 +3,9 @@
 #ifndef COMPONENT_H
 #define COMPONENT_H
 
+// get rid of errors
+typedef struct node node_t;
+
 typedef enum { START, END } PointType;
 
 typedef struct Point Point;
@@ -19,7 +22,7 @@ struct Point {
 // do I need a seperate field to track the number of points?
 typedef struct {
   int numPoints;
-  Point *points;
+  node_t *points;
 } Component;
 
 Component *newComponent();
