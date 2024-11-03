@@ -4,8 +4,8 @@ int main() {
   Component *component = newComponent();
 
   registerPoint(component, (Vector2){30, 30}, 5, "input", START);
-  registerPoint(component, (Vector2){800 - 30, 450 - 30}, 6, "input1", START);
-  registerPoint(component, (Vector2){800 - 30, 30}, 7, "input2", START);
+  registerPoint(component, (Vector2){800 - 30, 450 - 30}, 9, "+1 damage", END);
+  registerPoint(component, (Vector2){800 - 30, 30}, 13, "+1 projectile", END);
 
   int screenWidth = 800;
   int screenHeight = 450;
@@ -16,7 +16,7 @@ int main() {
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
-    render(component);
+    render2(component);
 
     EndDrawing();
   }

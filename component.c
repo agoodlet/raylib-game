@@ -10,31 +10,13 @@
 // depending on which output nodes are "active" depends on the resulting stat
 // increases
 
-// What do I need to track for points?
-// - xpos
-// - ypos
-// - isConnected
-//    - is there an established connection?
-// - isConnecting
-//    - is the user currently manipulating the connection
-// - connectedPoint
-//    - what point is the current point connected to
-
-// what do I need to track for the component?
-//  - which output nodes are active
-
-// need a function to:
-// create random points on a component
-//
-
 const int screenWidth = 800;
 const int screenHeight = 450;
 const int numPoints = 3;
+// should theses be moved to the point struct?
+Point *target = NULL;
+Point *start = NULL;
 
-// take in a pos, label, label size, type
-// in the future I should set up and register some structs that are "modifiers"
-// so I can have a modifier that is for projectiles and a value of 2 for + 2
-// projectiles and then I can derive the label from that
 void registerPoint(Component *component, Vector2 pos, int labelSize,
                    char *label, PointType type) {
   Point *point;
@@ -44,7 +26,9 @@ void registerPoint(Component *component, Vector2 pos, int labelSize,
   // do some computing to make sure label is = labelSize
   point->label = malloc(labelSize * sizeof(char));
   point->label = label;
+  point->isConnected = malloc(sizeof(bool));
   point->isConnected = false;
+  point->isConnecting = malloc(sizeof(bool));
   point->isConnecting = false;
   point->selected = false;
   point->connectedPoint = malloc(sizeof(Point));
@@ -87,9 +71,75 @@ void yeet(Component *component) {
 
 int render2(Component *component) {
 
+  Vector2 mouse = GetMousePosition();
+
+  // there's probably a way to iterate through the linked list that saves me
+  // from having to uses the getByIndex function I can probably do this the
+  // exact same way i'm doign it in the link file
   for (int a = 0; a < component->numPoints; a++) {
-    Point point = *getByIndex(component->points, a)->val;
-    DrawText(point.label, 50, 50 * a, 20, BLACK);
+    Point *point = getByIndex(component->points, a)->val;
+
+    // draw existing connections
+    if (point->isConnected) {
+      DrawLineBezier(point->pos, point->connectedPoint->pos, 4.0f, GREEN);
+    }
+
+    DrawCircleV(point->pos,
+                CheckCollisionPointCircle(mouse, point->pos, 10.0f) ? 14.0f
+                                                                    : 8.0f,
+                point->isConnecting ? RED : BLUE);
+
+    // if I'm currently moused over a START node
+    // AND I'm holding the mouse down
+    // I want to draw a bezier curve between my mouse and that node
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+        CheckCollisionPointCircle(mouse, point->pos, 10.0f) &&
+        point->type == START) {
+      point->isConnecting = true;
+      point->isConnected = false;
+      start = point;
+    }
+
+    if (CheckCollisionPointCircle(mouse, point->pos, 10.0f) &&
+        IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && point->type == END) {
+      target = point;
+    }
+
+    if (point->isConnecting) {
+      DrawLineBezier(mouse, point->pos, 4.0f, BLUE);
+    }
+
+    // make a renderHelper.h so I can add my draw text bounds detection to
+    // that I guess
+    Vector2 labelDimensions;
+    labelDimensions = MeasureTextEx(GetFontDefault(), point->label, 20, 1);
+
+    if (point->pos.y > screenHeight / 2.0f) {
+      // I don't fucking understand why this is -2 instead of -1
+      labelDimensions.y *= -2;
+    }
+
+    DrawText(point->label, point->pos.x - labelDimensions.x,
+             point->pos.y + labelDimensions.y, 20, BLACK);
+
+    DrawCircleV(point->pos,
+                CheckCollisionPointCircle(mouse, point->pos, 10.0f) ? 14.0f
+                                                                    : 8.0f,
+                point->isConnecting ? RED : BLUE);
+  }
+
+  // tto be honest I can probably move most more of the logic out here and just
+  // uses the start and target values instead of the point iterator
+  if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+    if (start != NULL && target != NULL) {
+      start->isConnected = true;
+      start->connectedPoint = target;
+      start->isConnecting = false;
+    } else if (start != NULL && target == NULL) {
+      start->isConnecting = false;
+    }
+    start = NULL;
+    target = NULL;
   }
 
   return 0;
@@ -101,52 +151,53 @@ int render(Component *component) {
   Point *end = NULL;
 
   Vector2 mouse = GetMousePosition();
+  Point *point;
 
   for (int a = 0; a < component->numPoints; a++) {
     // draw any connections we might have
 
-    Point point = *getByIndex(component->points, a)->val;
+    point = getByIndex(component->points, a)->val;
 
-    if (point.isConnected) {
-      DrawLineBezier(point.pos, point.connectedPoint->pos, 4.0f, GREEN);
+    if (point->isConnected) {
+      DrawLineBezier(point->pos, point->connectedPoint->pos, 4.0f, GREEN);
     }
 
-    if (point.type == START) {
-      if (CheckCollisionPointCircle(mouse, point.pos, 10.0f) &&
-          IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        start = &point;
-        start->label = "onput";
-        printf("%s", point.label);
+    if (point->type == START) {
+      if (CheckCollisionPointCircle(mouse, point->pos, 10.0f) &&
+          IsMouseButtonUp(MOUSE_BUTTON_LEFT)) {
+        start = point;
       }
     }
 
-    if (point.type == END) {
+    if (point->type == END) {
       // set the end point if we mouse over a point while holding the
       // mouse
       // down
-      if (CheckCollisionPointCircle(mouse, point.pos, 10.0f) &&
+      if (CheckCollisionPointCircle(mouse, point->pos, 10.0f) &&
           IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-        end = &point;
+        end = point;
       }
     }
 
     // make a renderHelper.h so I can add my draw text bounds detection to
     // that I guess
     Vector2 labelDimensions;
-    labelDimensions = MeasureTextEx(GetFontDefault(), point.label, 20, 1);
+    labelDimensions = MeasureTextEx(GetFontDefault(), point->label, 20, 1);
 
-    if (point.pos.y > screenHeight / 2.0f) {
+    if (point->pos.y > screenHeight / 2.0f) {
       // I don't fucking understand why this is -2 instead of -1
       labelDimensions.y *= -2;
     }
 
-    DrawText(point.label, point.pos.x - labelDimensions.x,
-             point.pos.y + labelDimensions.y, 20, BLACK);
+    DrawText(point->label, point->pos.x - labelDimensions.x,
+             point->pos.y + labelDimensions.y, 20, BLACK);
 
-    DrawCircleV(point.pos,
-                CheckCollisionPointCircle(mouse, point.pos, 10.0f) ? 14.0f
-                                                                   : 8.0f,
-                point.isConnecting ? RED : BLUE);
+    DrawCircleV(point->pos,
+                CheckCollisionPointCircle(mouse, point->pos, 10.0f) ? 14.0f
+                                                                    : 8.0f,
+                point->isConnecting ? RED : BLUE);
+
+    free(point);
   }
 
   // if we release the mouse button and we have an end point, we want to
