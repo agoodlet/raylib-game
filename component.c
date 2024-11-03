@@ -67,6 +67,7 @@ void yeet(Component *component) {
   /* free(component); */
 }
 
+// try and sperate this into a render function and a compute function
 int render(Component *component) {
 
   Vector2 mouse = GetMousePosition();
