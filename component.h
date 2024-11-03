@@ -25,7 +25,7 @@ typedef struct {
   node_t *points;
 } Component;
 
-Component *newComponent();
+Component *newComponent(int numPoints);
 void registerPoint(Component *component, Vector2 pos, int labelSize,
                    char *label, PointType type);
 int render(Component *component);

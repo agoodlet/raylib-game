@@ -10,9 +10,10 @@
 // depending on which output nodes are "active" depends on the resulting stat
 // increases
 
+// these are also defined in main.c so I should probably find a way to uses 1
+// set of these values shere
 const int screenWidth = 800;
 const int screenHeight = 450;
-const int numPoints = 3;
 // should theses be moved to the point struct?
 Point *target = NULL;
 Point *start = NULL;
@@ -39,12 +40,9 @@ void registerPoint(Component *component, Vector2 pos, int labelSize,
   } else {
     pushBack(component->points, point);
   }
-
-  // make a linked list so I can add to the end of the list every time without
-  // array fuckery
 }
 
-Component *newComponent() {
+Component *newComponent(int numPoints) {
   /* Point *Points = malloc(numPoints * sizeof(Point)); */
 
   Component *newComponent;
@@ -59,11 +57,11 @@ Component *newComponent() {
   return newComponent;
 }
 
+// move this function to list.c to "delete" nodes in the linked list
+// then can just free the component here
 void yeet(Component *component) {
   for (int a = 0; a < component->numPoints; a++) {
     // idk why but this breaks so we don't need it for now
-    /* free(component->points[a].label); */
-    /* free(component->points[a].connectedPoint); */
   }
   /* free(component->points); */
   /* free(component); */
