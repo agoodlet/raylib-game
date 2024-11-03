@@ -28,11 +28,10 @@ int main() {
   // need to find map a "value" to a button
   // or maybe a callback? then I can define
   // a function that returns the right component
-  // tbh I think just move the buttons to a helper class thing
   Rectangle btn1Bounds = {50, 50, 100, 50};
   int btn1State = 0;
 
-  Rectangle btn2Bounds = {50, 110, 100, 50};
+  Rectangle btn2Bounds = {50, 150, 100, 50};
   int btn2State = 0;
 
   Component *current = NULL;
@@ -85,9 +84,9 @@ int main() {
                DARKGRAY);
     } break;
     case COMPONENT: {
+      ClearBackground(RAYWHITE);
 
       if (IsKeyPressed(KEY_BACKSPACE)) {
-        /* current = NULL; */
         currentScene = TITLE;
       }
 
