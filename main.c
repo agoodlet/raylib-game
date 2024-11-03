@@ -16,7 +16,7 @@ int main() {
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
-    render2(component);
+    render(component);
 
     EndDrawing();
   }

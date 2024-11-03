@@ -69,7 +69,7 @@ void yeet(Component *component) {
   /* free(component); */
 }
 
-int render2(Component *component) {
+int render(Component *component) {
 
   Vector2 mouse = GetMousePosition();
 
@@ -140,85 +140,6 @@ int render2(Component *component) {
     }
     start = NULL;
     target = NULL;
-  }
-
-  return 0;
-}
-
-// render should take in a pointer to a component and render that component
-int render(Component *component) {
-  Point *start = NULL;
-  Point *end = NULL;
-
-  Vector2 mouse = GetMousePosition();
-  Point *point;
-
-  for (int a = 0; a < component->numPoints; a++) {
-    // draw any connections we might have
-
-    point = getByIndex(component->points, a)->val;
-
-    if (point->isConnected) {
-      DrawLineBezier(point->pos, point->connectedPoint->pos, 4.0f, GREEN);
-    }
-
-    if (point->type == START) {
-      if (CheckCollisionPointCircle(mouse, point->pos, 10.0f) &&
-          IsMouseButtonUp(MOUSE_BUTTON_LEFT)) {
-        start = point;
-      }
-    }
-
-    if (point->type == END) {
-      // set the end point if we mouse over a point while holding the
-      // mouse
-      // down
-      if (CheckCollisionPointCircle(mouse, point->pos, 10.0f) &&
-          IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-        end = point;
-      }
-    }
-
-    // make a renderHelper.h so I can add my draw text bounds detection to
-    // that I guess
-    Vector2 labelDimensions;
-    labelDimensions = MeasureTextEx(GetFontDefault(), point->label, 20, 1);
-
-    if (point->pos.y > screenHeight / 2.0f) {
-      // I don't fucking understand why this is -2 instead of -1
-      labelDimensions.y *= -2;
-    }
-
-    DrawText(point->label, point->pos.x - labelDimensions.x,
-             point->pos.y + labelDimensions.y, 20, BLACK);
-
-    DrawCircleV(point->pos,
-                CheckCollisionPointCircle(mouse, point->pos, 10.0f) ? 14.0f
-                                                                    : 8.0f,
-                point->isConnecting ? RED : BLUE);
-
-    free(point);
-  }
-
-  // if we release the mouse button and we have an end point, we want to
-  // connect to it then we want to wipe our start and end points
-  if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-    if (start != NULL && end != NULL) {
-      start->connectedPoint = end;
-      start->isConnected = true;
-      start->isConnecting = false;
-    }
-    start = NULL;
-    end = NULL;
-  }
-
-  // if we are holding the mouse down and we have a start point we know we
-  // want to be drawing a bezier curve
-  if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && start != NULL) {
-    start->isConnecting = true;
-    start->isConnected = false;
-
-    DrawLineBezier(start->pos, mouse, 4.0f, BLUE);
   }
 
   return 0;
